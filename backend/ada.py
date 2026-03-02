@@ -324,6 +324,7 @@ class AudioLoop:
         # VAD State
         self._is_speaking = False
         self._silence_start_time = None
+        self._is_outputting = False  # Echo gate: True while EDITH plays audio
         
         # Initialize ProjectManager
         from project_manager import ProjectManager
@@ -398,6 +399,9 @@ class AudioLoop:
     async def send_realtime(self):
         while True:
             msg = await self.out_queue.get()
+            # Echo gate: drop mic audio while EDITH is speaking to prevent interruption
+            if self._is_outputting and isinstance(msg, dict) and msg.get("mime_type") == "audio/pcm":
+                continue  # Skip this audio chunk — it's likely echo
             await self.session.send(input=msg, end_of_turn=False)
 
     async def listen_audio(self):
@@ -464,7 +468,7 @@ class AudioLoop:
             kwargs = {}
         
         # VAD Constants
-        VAD_THRESHOLD = 800 # Adj based on mic sensitivity (800 is conservative for 16-bit)
+        VAD_THRESHOLD = 1500 # Raised to avoid echo/noise triggering interruption
         SILENCE_DURATION = 0.5 # Seconds of silence to consider "done speaking"
         
         while True:
@@ -490,7 +494,7 @@ class AudioLoop:
                 else:
                     rms = 0
                 
-                if rms > VAD_THRESHOLD:
+                if rms > VAD_THRESHOLD and not self._is_outputting:
                     # Speech Detected
                     self._silence_start_time = None
                     
@@ -1230,9 +1234,11 @@ class AudioLoop:
         )
         while True:
             bytestream = await self.audio_in_queue.get()
+            self._is_outputting = True  # Echo gate: suppress VAD while playing
             if self.on_audio_data:
                 self.on_audio_data(bytestream)
             await asyncio.to_thread(stream.write, bytestream)
+            self._is_outputting = False
 
     async def get_frames(self):
         cap = await asyncio.to_thread(cv2.VideoCapture, 0, cv2.CAP_AVFOUNDATION)
