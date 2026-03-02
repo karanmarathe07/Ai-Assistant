@@ -201,9 +201,9 @@ config = types.LiveConnectConfig(
     # We switch these from [] to {} to enable them with default settings
     output_audio_transcription={}, 
     input_audio_transcription={},
-    system_instruction="Your name is Ada, which stands for Advanced Design Assistant. "
+    system_instruction="Your name is EDITH. "
         "You have a witty and charming personality. "
-        "Your creator is Naz, and you address him as 'Sir'. "
+        "Your creator is Karan, and you address him as 'Sir'. "
         "When answering, respond using complete and concise sentences to keep a quick pacing and keep the conversation flowing. "
         "You have a fun personality.",
     tools=tools,
@@ -710,15 +710,15 @@ class AudioLoop:
                                     if delta:
                                         # Send to frontend (Streaming)
                                         if self.on_transcription:
-                                             self.on_transcription({"sender": "ADA", "text": delta})
+                                             self.on_transcription({"sender": "EDITH", "text": delta})
                                         
                                         # Buffer for Logging
-                                        if self.chat_buffer["sender"] != "ADA":
+                                        if self.chat_buffer["sender"] != "EDITH":
                                             # Flush previous
                                             if self.chat_buffer["sender"] and self.chat_buffer["text"].strip():
                                                 self.project_manager.log_chat(self.chat_buffer["sender"], self.chat_buffer["text"])
                                             # Start new
-                                            self.chat_buffer = {"sender": "ADA", "text": delta}
+                                            self.chat_buffer = {"sender": "EDITH", "text": delta}
                                         else:
                                             # Append
                                             self.chat_buffer["text"] += delta
