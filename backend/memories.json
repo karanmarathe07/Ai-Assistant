@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ec3c121a",
+    "text": "My favorite color is yellow",
+    "category": "preference",
+    "timestamp": "2026-03-03T01:19:06.437587"
+  },
+  {
+    "id": "08864910",
+    "text": "Always act like a female",
+    "category": "preference",
+    "timestamp": "2026-03-03T01:19:08.268211"
+  },
+  {
+    "id": "d34b8dde",
+    "text": "Mobile number: 9373921866",
+    "category": "fact",
+    "timestamp": "2026-03-03T01:22:27.910777"
+  }
+]

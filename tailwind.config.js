@@ -1,21 +1,26 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-    content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-    ],
+export default {
+    content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         extend: {
             fontFamily: {
-                mono: ['"Share Tech Mono"', 'monospace'], // Sci-fi font
+                sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
             },
             colors: {
-                cyan: {
-                    400: '#22d3ee',
-                    500: '#06b6d4',
-                    900: '#164e63',
-                }
-            }
+                navy: {
+                    900: '#0a0e1a',
+                    800: '#0f1525',
+                    700: '#141c30',
+                    600: '#1a2540',
+                },
+                teal: {
+                    400: '#00e5ff',
+                    500: '#00bcd4',
+                },
+                gold: {
+                    400: '#ffc107',
+                },
+            },
         },
     },
     plugins: [],

@@ -193,28 +193,65 @@ send_whatsapp_message_tool = {
     }
 }
 
-tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool, send_whatsapp_message_tool] + tools_list[0]['function_declarations'][1:]}]
+save_memory_tool = {
+    "name": "save_memory",
+    "description": "Saves a fact, preference, or piece of information to permanent memory. Use this when the user asks you to 'remember' something, or tells you personal info they want you to retain (e.g. 'remember my name is X', 'my favorite color is blue', 'I have a meeting tomorrow').",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "text": {"type": "STRING", "description": "The fact or information to remember."},
+            "category": {"type": "STRING", "description": "Optional category like 'preference', 'fact', 'name', 'schedule', 'general'."}
+        },
+        "required": ["text"]
+    }
+}
 
-# --- CONFIG UPDATE: Enabled Transcription ---
-config = types.LiveConnectConfig(
-    response_modalities=["AUDIO"],
-    # We switch these from [] to {} to enable them with default settings
-    output_audio_transcription={}, 
-    input_audio_transcription={},
-    system_instruction="Your name is EDITH. "
-        "You have a witty and charming personality. "
-        "Your creator is Karan, and you address him as 'Sir'. "
-        "When answering, respond using complete and concise sentences to keep a quick pacing and keep the conversation flowing. "
-        "You have a fun personality.",
-    tools=tools,
-    speech_config=types.SpeechConfig(
-        voice_config=types.VoiceConfig(
-            prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                voice_name="Kore"
+delete_memory_tool = {
+    "name": "delete_memory",
+    "description": "Deletes a previously saved memory by its ID. Use this when the user asks you to 'forget' something or remove a saved memory.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "memory_id": {"type": "STRING", "description": "The ID of the memory to delete."}
+        },
+        "required": ["memory_id"]
+    }
+}
+
+tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool, send_whatsapp_message_tool, save_memory_tool, delete_memory_tool] + tools_list[0]['function_declarations'][1:]}]
+
+# --- BASE SYSTEM INSTRUCTION ---
+BASE_SYSTEM_INSTRUCTION = (
+    "Your name is EDITH. "
+    "You have a witty and charming personality. "
+    "Your creator is Karan, and you address him as 'Sir'. "
+    "When answering, respond using complete and concise sentences to keep a quick pacing and keep the conversation flowing. "
+    "You have a fun personality. "
+    "You have a persistent memory system. When the user tells you to remember something (e.g. 'remember that my favorite color is blue'), "
+    "use the save_memory tool to save it permanently. When the user asks you to forget something, use delete_memory with the memory ID. "
+    "Your saved memories are automatically loaded at the start of each session so you always know what the user has told you to remember."
+)
+
+def build_config(memory_context=""):
+    """Build a LiveConnectConfig with optional memory context baked into the system instruction."""
+    instruction = BASE_SYSTEM_INSTRUCTION
+    if memory_context:
+        instruction += f"\n\n{memory_context}"
+    
+    return types.LiveConnectConfig(
+        response_modalities=["AUDIO"],
+        output_audio_transcription={}, 
+        input_audio_transcription={},
+        system_instruction=instruction,
+        tools=tools,
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                    voice_name="Aoede"
+                )
             )
         )
     )
-)
 
 pya = pyaudio.PyAudio()
 
@@ -223,6 +260,7 @@ from web_agent import WebAgent
 from kasa_agent import KasaAgent
 from printer_agent import PrinterAgent
 import whatsapp_agent
+from memory_manager import MemoryManager
 
 class AudioLoop:
     def __init__(self, video_mode=DEFAULT_MODE, on_audio_data=None, on_video_frame=None, on_cad_data=None, on_web_data=None, on_transcription=None, on_tool_confirmation=None, on_cad_status=None, on_cad_thought=None, on_project_update=None, on_device_update=None, on_error=None, input_device_index=None, input_device_name=None, output_device_index=None, kasa_agent=None):
@@ -271,6 +309,7 @@ class AudioLoop:
         self.web_agent = WebAgent()
         self.kasa_agent = kasa_agent if kasa_agent else KasaAgent()
         self.printer_agent = PrinterAgent()
+        self.memory_manager = MemoryManager()
 
         self.send_text_task = None
         self.stop_event = asyncio.Event()
@@ -732,7 +771,7 @@ class AudioLoop:
                         print("The tool was called")
                         function_responses = []
                         for fc in response.tool_call.function_calls:
-                            if fc.name in ["generate_cad", "run_web_agent", "write_file", "read_directory", "read_file", "create_project", "switch_project", "list_projects", "list_smart_devices", "control_light", "discover_printers", "print_stl", "get_print_status", "iterate_cad", "send_whatsapp_message"]:
+                            if fc.name in ["generate_cad", "run_web_agent", "write_file", "read_directory", "read_file", "create_project", "switch_project", "list_projects", "list_smart_devices", "control_light", "discover_printers", "print_stl", "get_print_status", "iterate_cad", "send_whatsapp_message", "save_memory", "delete_memory"]:
                                 prompt = fc.args.get("prompt", "") # Prompt is not present for all tools
                                 
                                 # Check Permissions (Default to True if not set)
@@ -1137,6 +1176,35 @@ class AudioLoop:
                                         id=fc.id, name=fc.name, response={"result": result_str}
                                     )
                                     function_responses.append(function_response)
+
+                                elif fc.name == "save_memory":
+                                    mem_text = fc.args["text"]
+                                    mem_category = fc.args.get("category", "general")
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'save_memory' Text='{mem_text}' Category='{mem_category}'")
+                                    
+                                    memory = self.memory_manager.add_memory(mem_text, mem_category)
+                                    result_str = f"Memory saved successfully (ID: {memory['id']}): [{memory['category']}] {memory['text']}"
+                                    
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response={"result": result_str}
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "delete_memory":
+                                    mem_id = fc.args["memory_id"]
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'delete_memory' ID='{mem_id}'")
+                                    
+                                    deleted = self.memory_manager.delete_memory(mem_id)
+                                    if deleted:
+                                        result_str = f"Memory '{mem_id}' has been deleted successfully."
+                                    else:
+                                        result_str = f"Memory with ID '{mem_id}' was not found. Available memories: " + \
+                                            ", ".join([f"{m['id']}: {m['text']}" for m in self.memory_manager.get_all_memories()])
+                                    
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response={"result": result_str}
+                                    )
+                                    function_responses.append(function_response)
                         if function_responses:
                             await self.session.send_tool_response(function_responses=function_responses)
                 
@@ -1204,9 +1272,17 @@ class AudioLoop:
         
         while not self.stop_event.is_set():
             try:
+                # Build config with memories baked into system instruction
+                memory_context = self.memory_manager.get_memory_context()
+                if memory_context:
+                    print(f"[ADA DEBUG] [MEMORY] Loading {len(self.memory_manager.memories)} memories into system instruction...")
+                else:
+                    print(f"[ADA DEBUG] [MEMORY] No saved memories.")
+                active_config = build_config(memory_context)
+
                 print(f"[ADA DEBUG] [CONNECT] Connecting to Gemini Live API...")
                 async with (
-                    client.aio.live.connect(model=MODEL, config=config) as session,
+                    client.aio.live.connect(model=MODEL, config=active_config) as session,
                     asyncio.TaskGroup() as tg,
                 ):
                     self.session = session
@@ -1228,9 +1304,13 @@ class AudioLoop:
 
                     # Handle Startup vs Reconnect Logic
                     if not is_reconnect:
+
                         if start_message:
                             print(f"[ADA DEBUG] [INFO] Sending start message: {start_message}")
-                            await self.session.send(input=start_message, end_of_turn=True)
+                            try:
+                                await self.session.send(input=start_message, end_of_turn=True)
+                            except Exception as e:
+                                print(f"[ADA DEBUG] [WARN] Failed to send start message: {e}")
                         
                         # Sync Project State
                         if self.on_project_update and self.project_manager:

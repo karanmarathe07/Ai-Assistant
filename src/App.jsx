@@ -7,7 +7,9 @@ import CadWindow from './components/CadWindow';
 import BrowserWindow from './components/BrowserWindow';
 import ChatModule from './components/ChatModule';
 import ToolsModule from './components/ToolsModule';
-import { Mic, MicOff, Settings, X, Minus, Power, Video, VideoOff, Layout, Hand, Printer, Clock } from 'lucide-react';
+import LeftSidebar from './components/LeftSidebar';
+import RightSidebar from './components/RightSidebar';
+import { Mic, MicOff, Settings, X, Minus, Power, Video, VideoOff, Layout, Hand, Printer, Clock, Bell, Moon, Star, Crown } from 'lucide-react';
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 // MemoryPrompt removed - memory is now actively saved to project
 import ConfirmationPopup from './components/ConfirmationPopup';
@@ -1343,19 +1345,9 @@ function App() {
 
 
     return (
-        <div className="h-screen w-screen bg-black text-cyan-100 font-mono overflow-hidden flex flex-col relative selection:bg-cyan-900 selection:text-white">
+        <div className="h-screen w-screen overflow-hidden flex flex-col relative" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
 
-            {/* --- PREMIUM UI LAYER --- */}
-
-            {/* --- PREMIUM UI LAYER --- */}
-
-            {/* --- PREMIUM UI LAYER --- */}
-
-            {/* Logic: Show AuthLock if we are NOT authenticated AND (Lock Screen is visible OR Auth is Enabled) 
-                Actually, simpler: isLockScreenVisible is the source of truth for visibility.
-                We set isLockScreenVisible = true via socket if auth is required.
-             */}
-
+            {/* Auth Lock Overlay */}
             {isLockScreenVisible && (
                 <AuthLock
                     socket={socket}
@@ -1364,328 +1356,146 @@ function App() {
                 />
             )}
 
-            {/* --- PREMIUM UI LAYER --- */}
-
-            {/* Hand Cursor - Only show if tracking is enabled */}
+            {/* Hand Cursor */}
             {isVideoOn && isHandTrackingEnabled && (
                 <div
                     className={`fixed w-6 h-6 border-2 rounded-full pointer-events-none z-[100] transition-transform duration-75 ${isPinching ? 'bg-cyan-400 border-cyan-400 scale-75 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : 'border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]'}`}
-                    style={{
-                        left: cursorPos.x,
-                        top: cursorPos.y,
-                        transform: 'translate(-50%, -50%)'
-                    }}
+                    style={{ left: cursorPos.x, top: cursorPos.y, transform: 'translate(-50%, -50%)' }}
                 >
-                    {/* Center Dot for precision */}
                     <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
                 </div>
             )}
 
-            {/* Background Grid/Effects - ALIVE BACKGROUND (Fixed: Static opacity) */}
-            <div
-                className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0 pointer-events-none"
-                style={{ opacity: 0.6 }}
-            ></div>
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-0 pointer-events-none mix-blend-overlay"></div>
-
-            {/* Ambient Glow (Fixed: Static) */}
-            <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"
-            />
-
-            {/* Top Bar (Draggable) */}
-            <div className="z-50 flex items-center justify-between p-2 border-b border-cyan-500/20 bg-black/40 backdrop-blur-md select-none sticky top-0" style={{ WebkitAppRegion: 'drag' }}>
-                <div className="flex items-center gap-4 pl-2">
-                    <h1 className="text-xl font-bold tracking-[0.2em] text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                        EDITH
+            {/* ===== TOP NAVBAR ===== */}
+            <div className="z-50 flex items-center justify-between px-5 py-3 select-none shrink-0" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)', WebkitAppRegion: 'drag' }}>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-lg font-bold tracking-wide">
+                        <span className="text-gray-300">AI</span>{' '}
+                        <span style={{ color: 'var(--accent-cyan)' }}>Assistance</span>
                     </h1>
-                    <div className="text-[10px] text-cyan-700 border border-cyan-900 px-1 rounded">
-                        V2.0.0
+                    <div className="flex items-center gap-2 ml-4 pl-4" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-white text-xs font-bold">K</div>
+                        <span className="text-sm text-gray-300">Karan</span>
                     </div>
-                    {/* FPS Counter */}
                     {isVideoOn && (
-                        <div className="text-[10px] text-green-500 border border-green-900 px-1 rounded ml-2">
-                            FPS: {fps}
-                        </div>
+                        <div className="text-[10px] text-green-400 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded ml-2">FPS: {fps}</div>
                     )}
-                    {/* Connected Printers Count */}
                     {printerCount > 0 && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-green-400 border border-green-500/30 bg-green-500/10 px-2 py-0.5 rounded ml-2">
-                            <Printer size={10} className="text-green-400" />
+                        <div className="flex items-center gap-1 text-[10px] text-green-400 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded">
+                            <Printer size={10} />
                             <span>{printerCount} Printer{printerCount !== 1 ? 's' : ''}</span>
                         </div>
                     )}
-                    {/* Connected Smart Devices Count */}
                     {kasaDevices.length > 0 && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 border border-yellow-500/30 bg-yellow-500/10 px-2 py-0.5 rounded ml-2">
+                        <div className="flex items-center gap-1 text-[10px] text-yellow-400 border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 rounded">
                             <span>💡</span>
                             <span>{kasaDevices.length} Device{kasaDevices.length !== 1 ? 's' : ''}</span>
                         </div>
                     )}
                 </div>
 
-                {/* Top Visualizer (User Mic) */}
-                <div className="flex-1 flex justify-center mx-4">
+                <div className="flex-1 flex justify-center mx-6">
                     <TopAudioBar audioData={micAudioData} />
                 </div>
 
-                <div className="flex items-center gap-2 pr-2" style={{ WebkitAppRegion: 'no-drag' }}>
-                    {/* Live Clock */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-cyan-300/70 font-mono px-2">
-                        <Clock size={12} className="text-cyan-500/50" />
+                <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' }}>
+                    <button className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 transition-colors"><Bell size={18} /></button>
+                    <button className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 transition-colors"><Moon size={18} /></button>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ color: 'var(--accent-gold)', background: 'rgba(255, 193, 7, 0.08)', border: '1px solid rgba(255, 193, 7, 0.15)' }}>
+                        <Star size={14} fill="currentColor" /> PREMIUM
+                    </div>
+                    <div className="w-px h-5 mx-1" style={{ background: 'var(--border-subtle)' }} />
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400 px-1">
+                        <Clock size={12} />
                         <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <button onClick={handleMinimize} className="p-1 hover:bg-cyan-900/50 rounded text-cyan-500 transition-colors">
-                        <Minus size={18} />
-                    </button>
-                    <button onClick={handleMaximize} className="p-1 hover:bg-cyan-900/50 rounded text-cyan-500 transition-colors">
-                        <div className="w-[14px] h-[14px] border-2 border-current rounded-[2px]" />
-                    </button>
-                    <button onClick={handleCloseRequest} className="p-1 hover:bg-red-900/50 rounded text-red-500 transition-colors">
-                        <X size={18} />
-                    </button>
+                    <button onClick={handleMinimize} className="p-1.5 hover:bg-white/5 rounded text-gray-500 hover:text-gray-300 transition-colors"><Minus size={16} /></button>
+                    <button onClick={handleMaximize} className="p-1.5 hover:bg-white/5 rounded text-gray-500 hover:text-gray-300 transition-colors"><div className="w-3 h-3 border-[1.5px] border-current rounded-[2px]" /></button>
+                    <button onClick={handleCloseRequest} className="p-1.5 hover:bg-red-500/10 rounded text-gray-500 hover:text-red-400 transition-colors"><X size={16} /></button>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 relative z-10 flex flex-col items-center justify-center">
-                {/* Central Visualizer (AI Audio) */}
-                <div
-                    id="visualizer"
-                    className={`absolute flex items-center justify-center transition-all duration-200 
-                        backdrop-blur-xl bg-black/30 border border-white/10 shadow-2xl overflow-visible
-                        ${isModularMode ? (activeDragElement === 'visualizer' ? 'ring-2 ring-green-500 bg-green-500/10' : 'ring-1 ring-yellow-500/30 bg-yellow-500/5') + ' rounded-2xl pointer-events-auto' : 'rounded-2xl pointer-events-none'}
-                    `}
-                    style={{
-                        left: elementPositions.visualizer.x,
-                        top: elementPositions.visualizer.y,
-                        transform: 'translate(-50%, -50%)',
-                        width: elementSizes.visualizer.w,
-                        height: elementSizes.visualizer.h
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e, 'visualizer')}
-                >
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none mix-blend-overlay z-10"></div>
-                    <div className="relative z-20">
-                        <Visualizer
-                            audioData={aiAudioData}
-                            isListening={isConnected && !isMuted}
-                            intensity={audioAmp}
-                            width={elementSizes.visualizer.w}
-                            height={elementSizes.visualizer.h}
-                        />
+            {/* ===== MAIN 3-COLUMN LAYOUT ===== */}
+            <div className="flex-1 flex overflow-hidden relative">
+
+                {/* LEFT SIDEBAR */}
+                <div className="w-72 shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-subtle)' }}>
+                    <LeftSidebar />
+                </div>
+
+                {/* CENTER COLUMN */}
+                <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+
+                    <div className="absolute inset-0 pointer-events-none z-0">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px]" style={{ background: 'rgba(0, 229, 255, 0.04)' }} />
                     </div>
-                    {isModularMode && <div className={`absolute top-2 right-2 text-xs font-bold tracking-widest z-20 ${activeDragElement === 'visualizer' ? 'text-green-500' : 'text-yellow-500/50'}`}>VISUALIZER</div>}
-                </div>
 
-                {/* Video Feed Overlay */}
-                {/* Floating Project Label */}
-                <div className="absolute top-[70px] left-1/2 -translate-x-1/2 text-cyan-500 text-xs font-mono tracking-widest pointer-events-none z-50 bg-black/50 px-2 py-1 rounded backdrop-blur-sm border border-cyan-500/20">
-                    PROJECT: {currentProject?.toUpperCase()}
-                </div>
-
-                <div
-                    id="video"
-                    className={`fixed bottom-4 right-4 transition-all duration-200 
-                        ${isVideoOn ? 'opacity-100' : 'opacity-0 pointer-events-none'} 
-                        backdrop-blur-md bg-black/40 border border-white/10 shadow-xl rounded-xl
-                    `}
-                    style={{ zIndex: 20 }}
-                >
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none mix-blend-overlay"></div>
-                    {/* Compact Display Container (1080p Source) */}
-                    <div className="relative border border-cyan-500/30 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.1)] w-80 aspect-video bg-black/80">
-                        {/* Hidden Video Element (Source) */}
-                        <video ref={videoRef} autoPlay muted className="absolute inset-0 w-full h-full object-cover opacity-0" />
-
-                        <div className="absolute top-2 left-2 text-[10px] text-cyan-400 bg-black/60 backdrop-blur px-2 py-0.5 rounded border border-cyan-500/20 z-10 font-bold tracking-wider">CAM_01</div>
-
-                        {/* Canvas for Displaying Video + Skeleton (Ensures overlap) */}
-                        <canvas
-                            ref={canvasRef}
-                            className="absolute inset-0 w-full h-full opacity-80"
-                            style={{ transform: isCameraFlipped ? 'scaleX(-1)' : 'none' }}
-                        />
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] tracking-widest font-mono uppercase z-20 px-3 py-1 rounded-lg" style={{ color: 'var(--text-muted)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
+                        Project: {currentProject?.toUpperCase()}
                     </div>
-                </div>
 
-                {/* Settings Modal - Moved outside Video so it shows independently */}
-                {showSettings && (
-                    <SettingsWindow
-                        socket={socket}
-                        micDevices={micDevices}
-                        speakerDevices={speakerDevices}
-                        webcamDevices={webcamDevices}
-                        selectedMicId={selectedMicId}
-                        setSelectedMicId={setSelectedMicId}
-                        selectedSpeakerId={selectedSpeakerId}
-                        setSelectedSpeakerId={setSelectedSpeakerId}
-                        selectedWebcamId={selectedWebcamId}
-                        setSelectedWebcamId={setSelectedWebcamId}
-                        cursorSensitivity={cursorSensitivity}
-                        setCursorSensitivity={setCursorSensitivity}
-                        isCameraFlipped={isCameraFlipped}
-                        setIsCameraFlipped={setIsCameraFlipped}
-                        handleFileUpload={handleFileUpload}
-                        onClose={() => setShowSettings(false)}
-                    />
-                )}
+                    <div className="relative z-10 animate-breathe" style={{ marginTop: '-20px' }}>
+                        <Visualizer audioData={aiAudioData} isListening={isConnected && !isMuted} intensity={audioAmp} width={380} height={380} />
+                    </div>
 
-                {/* CAD Window Overlay - Moved outside of Video so it can show independently */}
-                {showCadWindow && (
-                    <div
-                        id="cad"
-                        className={`absolute flex flex-col transition-all duration-200 
-                        backdrop-blur-xl bg-black/40 border border-white/10 shadow-2xl overflow-hidden rounded-2xl
-                        ${activeDragElement === 'cad' ? 'ring-2 ring-green-500 bg-green-500/10' : ''}
-                    `}
-                        style={{
-                            left: elementPositions.cad?.x || window.innerWidth / 2,
-                            top: elementPositions.cad?.y || window.innerHeight / 2,
-                            transform: 'translate(-50%, -50%)',
-                            width: `${elementSizes.cad.w}px`,
-                            height: `${elementSizes.cad.h}px`,
-                            pointerEvents: 'auto',
-                            zIndex: getZIndex('cad')
-                        }}
-                        onMouseDown={(e) => handleMouseDown(e, 'cad')}
-                    >
-                        {/* Drag Handle Header */}
-                        <div
-                            data-drag-handle
-                            className="h-8 bg-gray-900/80 border-b border-cyan-500/20 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing shrink-0"
-                        >
-                            <span className="text-xs font-bold tracking-widest text-cyan-500/70">CAD PROTOTYPE</span>
-                            <button
-                                onClick={() => setShowCadWindow(false)}
-                                className="text-gray-400 hover:text-red-400 hover:bg-red-500/20 p-1 rounded transition-colors"
-                            >
-                                ✕
+                    <div className="relative z-10 w-full" style={{ marginTop: '-10px' }}>
+                        <ChatModule messages={messages} inputValue={inputValue} setInputValue={setInputValue} handleSend={handleSend} isModularMode={isModularMode} activeDragElement={activeDragElement} position={elementPositions.chat} width={elementSizes.chat.w} height={elementSizes.chat.h} onMouseDown={(e) => handleMouseDown(e, 'chat')} />
+                    </div>
+
+                    <div className="relative z-10 flex flex-col items-center mt-4">
+                        <div className="text-2xl font-semibold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                            {isConnected && !isMuted ? 'Listening...' : isConnected ? 'Muted' : 'Disconnected'}
+                        </div>
+                        <div className="mt-3">
+                            <button onClick={toggleMute} disabled={!isConnected} className="p-3 rounded-full transition-all duration-300" style={{ color: !isConnected ? 'var(--text-muted)' : isMuted ? '#ef4444' : 'var(--accent-cyan)', background: !isConnected ? 'rgba(255,255,255,0.03)' : isMuted ? 'rgba(239,68,68,0.1)' : 'rgba(0,229,255,0.1)', border: `1px solid ${!isConnected ? 'var(--border-subtle)' : isMuted ? 'rgba(239,68,68,0.3)' : 'rgba(0,229,255,0.3)'}` }}>
+                                {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
                             </button>
                         </div>
-                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none mix-blend-overlay z-10"></div>
-                        <div className="relative z-20 flex-1 min-h-0">
-                            <CadWindow
-                                data={cadData}
-                                thoughts={cadThoughts}
-                                retryInfo={cadRetryInfo}
-                                onClose={() => setShowCadWindow(false)}
-                                socket={socket}
-                            />
+                    </div>
+
+                    {/* Video Feed */}
+                    <div id="video" className={`fixed bottom-20 right-80 transition-all duration-200 rounded-xl overflow-hidden z-30 ${isVideoOn ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-card)' }}>
+                        <div className="relative w-72 aspect-video bg-black">
+                            <video ref={videoRef} autoPlay muted className="absolute inset-0 w-full h-full object-cover opacity-0" />
+                            <div className="absolute top-2 left-2 text-[9px] font-bold tracking-wider px-2 py-0.5 rounded z-10" style={{ color: 'var(--accent-cyan)', background: 'rgba(0,0,0,0.6)' }}>CAM_01</div>
+                            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80" style={{ transform: isCameraFlipped ? 'scaleX(-1)' : 'none' }} />
                         </div>
                     </div>
-                )}
 
+                    {/* Popup Windows */}
+                    {showSettings && (
+                        <SettingsWindow socket={socket} micDevices={micDevices} speakerDevices={speakerDevices} webcamDevices={webcamDevices} selectedMicId={selectedMicId} setSelectedMicId={setSelectedMicId} selectedSpeakerId={selectedSpeakerId} setSelectedSpeakerId={setSelectedSpeakerId} selectedWebcamId={selectedWebcamId} setSelectedWebcamId={setSelectedWebcamId} cursorSensitivity={cursorSensitivity} setCursorSensitivity={setCursorSensitivity} isCameraFlipped={isCameraFlipped} setIsCameraFlipped={setIsCameraFlipped} handleFileUpload={handleFileUpload} onClose={() => setShowSettings(false)} />
+                    )}
 
-                {/* Browser Window Overlay */}
-                {showBrowserWindow && (
-                    <div
-                        id="browser"
-                        className={`absolute flex flex-col transition-all duration-200 
-                        backdrop-blur-xl bg-black/40 border border-white/10 shadow-2xl overflow-hidden rounded-lg
-                        ${activeDragElement === 'browser' ? 'ring-2 ring-green-500 bg-green-500/10' : ''}
-                    `}
-                        style={{
-                            left: elementPositions.browser?.x || window.innerWidth / 2 - 200,
-                            top: elementPositions.browser?.y || window.innerHeight / 2,
-                            transform: 'translate(-50%, -50%)',
-                            width: `${elementSizes.browser.w}px`,
-                            height: `${elementSizes.browser.h}px`,
-                            pointerEvents: 'auto',
-                            zIndex: getZIndex('browser')
-                        }}
-                        onMouseDown={(e) => handleMouseDown(e, 'browser')}
-                    >
-                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none mix-blend-overlay z-10"></div>
-                        <div className="relative z-20 w-full h-full">
-                            <BrowserWindow
-                                imageSrc={browserData.image}
-                                logs={browserData.logs}
-                                onClose={() => setShowBrowserWindow(false)}
-                                socket={socket}
-                            />
+                    {showCadWindow && (
+                        <div id="cad" className={`absolute flex flex-col transition-all duration-200 backdrop-blur-xl border shadow-2xl overflow-hidden rounded-2xl ${activeDragElement === 'cad' ? 'ring-2 ring-green-500' : ''}`} style={{ left: elementPositions.cad?.x || window.innerWidth / 2, top: elementPositions.cad?.y || window.innerHeight / 2, transform: 'translate(-50%, -50%)', width: `${elementSizes.cad.w}px`, height: `${elementSizes.cad.h}px`, pointerEvents: 'auto', zIndex: getZIndex('cad'), background: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }} onMouseDown={(e) => handleMouseDown(e, 'cad')}>
+                            <div data-drag-handle className="h-8 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing shrink-0" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
+                                <span className="text-xs font-bold tracking-widest" style={{ color: 'var(--accent-cyan)', opacity: 0.7 }}>CAD PROTOTYPE</span>
+                                <button onClick={() => setShowCadWindow(false)} className="text-gray-400 hover:text-red-400 p-1 rounded transition-colors">✕</button>
+                            </div>
+                            <div className="relative z-20 flex-1 min-h-0"><CadWindow data={cadData} thoughts={cadThoughts} retryInfo={cadRetryInfo} onClose={() => setShowCadWindow(false)} socket={socket} /></div>
                         </div>
-                    </div>
-                )}
+                    )}
 
+                    {showBrowserWindow && (
+                        <div id="browser" className={`absolute flex flex-col transition-all duration-200 backdrop-blur-xl border shadow-2xl overflow-hidden rounded-lg ${activeDragElement === 'browser' ? 'ring-2 ring-green-500' : ''}`} style={{ left: elementPositions.browser?.x || window.innerWidth / 2 - 200, top: elementPositions.browser?.y || window.innerHeight / 2, transform: 'translate(-50%, -50%)', width: `${elementSizes.browser.w}px`, height: `${elementSizes.browser.h}px`, pointerEvents: 'auto', zIndex: getZIndex('browser'), background: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }} onMouseDown={(e) => handleMouseDown(e, 'browser')}>
+                            <div className="relative z-20 w-full h-full"><BrowserWindow imageSrc={browserData.image} logs={browserData.logs} onClose={() => setShowBrowserWindow(false)} socket={socket} /></div>
+                        </div>
+                    )}
 
-                {/* Chat Module */}
-                <ChatModule
-                    messages={messages}
-                    inputValue={inputValue}
-                    setInputValue={setInputValue}
-                    handleSend={handleSend}
-                    isModularMode={isModularMode}
-                    activeDragElement={activeDragElement}
-                    position={elementPositions.chat}
-                    width={elementSizes.chat.w}
-                    height={elementSizes.chat.h}
-                    onMouseDown={(e) => handleMouseDown(e, 'chat')}
-                />
-
-                {/* Footer Controls / Tools Module */}
-                <div className="z-20 flex justify-center pb-10 pointer-events-none">
-                    <ToolsModule
-                        isConnected={isConnected}
-                        isMuted={isMuted}
-                        isVideoOn={isVideoOn}
-                        isHandTrackingEnabled={isHandTrackingEnabled}
-                        showSettings={showSettings}
-                        onTogglePower={togglePower}
-                        onToggleMute={toggleMute}
-                        onToggleVideo={toggleVideo}
-                        onToggleSettings={() => setShowSettings(!showSettings)}
-                        onToggleHand={() => setIsHandTrackingEnabled(!isHandTrackingEnabled)}
-                        onToggleKasa={toggleKasaWindow}
-                        showKasaWindow={showKasaWindow}
-                        onTogglePrinter={togglePrinterWindow}
-                        showPrinterWindow={showPrinterWindow}
-                        onToggleCad={() => setShowCadWindow(!showCadWindow)}
-                        showCadWindow={showCadWindow}
-                        onToggleBrowser={() => setShowBrowserWindow(!showBrowserWindow)}
-                        showBrowserWindow={showBrowserWindow}
-                        activeDragElement={activeDragElement}
-                        position={elementPositions.tools}
-                        onMouseDown={(e) => handleMouseDown(e, 'tools')}
-                    />
+                    {showKasaWindow && (<KasaWindow socket={socket} position={elementPositions.kasa} activeDragElement={activeDragElement} setActiveDragElement={setActiveDragElement} devices={kasaDevices} onClose={() => setShowKasaWindow(false)} onMouseDown={(e) => handleMouseDown(e, 'kasa')} zIndex={getZIndex('kasa')} />)}
+                    {showPrinterWindow && (<PrinterWindow socket={socket} onClose={() => setShowPrinterWindow(false)} position={elementPositions.printer} onMouseDown={(e) => handleMouseDown(e, 'printer')} activeDragElement={activeDragElement} setActiveDragElement={setActiveDragElement} zIndex={getZIndex('printer')} />)}
+                    <ConfirmationPopup request={confirmationRequest} onConfirm={handleConfirmTool} onDeny={handleDenyTool} />
                 </div>
 
-                {/* Kasa Window */}
-                {showKasaWindow && (
-                    <KasaWindow
-                        socket={socket}
-                        position={elementPositions.kasa}
-                        activeDragElement={activeDragElement}
-                        setActiveDragElement={setActiveDragElement}
-                        devices={kasaDevices}
-                        onClose={() => setShowKasaWindow(false)}
-                        onMouseDown={(e) => handleMouseDown(e, 'kasa')}
-                        zIndex={getZIndex('kasa')}
-                    />
-                )}
-
-                {/* Printer Window */}
-                {showPrinterWindow && (
-                    <PrinterWindow
-                        socket={socket}
-                        onClose={() => setShowPrinterWindow(false)}
-                        position={elementPositions.printer}
-                        onMouseDown={(e) => handleMouseDown(e, 'printer')}
-                        activeDragElement={activeDragElement}
-                        setActiveDragElement={setActiveDragElement}
-                        zIndex={getZIndex('printer')}
-                    />
-                )}
-
-                {/* Memory Prompt removed - memory is now actively saved to project */}
-
-                {/* Tool Confirmation Modal */}
-                <ConfirmationPopup
-                    request={confirmationRequest}
-                    onConfirm={handleConfirmTool}
-                    onDeny={handleDenyTool}
-                />
+                {/* RIGHT SIDEBAR */}
+                <div className="w-72 shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
+                    <RightSidebar />
+                </div>
             </div>
+
+            {/* ===== BOTTOM NAV ===== */}
+            <ToolsModule isConnected={isConnected} isMuted={isMuted} isVideoOn={isVideoOn} isHandTrackingEnabled={isHandTrackingEnabled} showSettings={showSettings} onTogglePower={togglePower} onToggleMute={toggleMute} onToggleVideo={toggleVideo} onToggleSettings={() => setShowSettings(!showSettings)} onToggleHand={() => setIsHandTrackingEnabled(!isHandTrackingEnabled)} onToggleKasa={toggleKasaWindow} showKasaWindow={showKasaWindow} onTogglePrinter={togglePrinterWindow} showPrinterWindow={showPrinterWindow} onToggleCad={() => setShowCadWindow(!showCadWindow)} showCadWindow={showCadWindow} onToggleBrowser={() => setShowBrowserWindow(!showBrowserWindow)} showBrowserWindow={showBrowserWindow} activeDragElement={activeDragElement} position={elementPositions.tools} onMouseDown={(e) => handleMouseDown(e, 'tools')} />
         </div>
     );
 }
