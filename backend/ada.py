@@ -180,7 +180,20 @@ iterate_cad_tool = {
     "behavior": "NON_BLOCKING"
 }
 
-tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool] + tools_list[0]['function_declarations'][1:]}]
+send_whatsapp_message_tool = {
+    "name": "send_whatsapp_message",
+    "description": "Sends a message to a contact on WhatsApp. Use this when the user asks to send a WhatsApp message, text someone on WhatsApp, or message a contact.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "contact": {"type": "STRING", "description": "The name of the contact to send the message to."},
+            "message": {"type": "STRING", "description": "The text message to send."}
+        },
+        "required": ["contact", "message"]
+    }
+}
+
+tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool, send_whatsapp_message_tool] + tools_list[0]['function_declarations'][1:]}]
 
 # --- CONFIG UPDATE: Enabled Transcription ---
 config = types.LiveConnectConfig(
@@ -209,6 +222,7 @@ from cad_agent import CadAgent
 from web_agent import WebAgent
 from kasa_agent import KasaAgent
 from printer_agent import PrinterAgent
+import whatsapp_agent
 
 class AudioLoop:
     def __init__(self, video_mode=DEFAULT_MODE, on_audio_data=None, on_video_frame=None, on_cad_data=None, on_web_data=None, on_transcription=None, on_tool_confirmation=None, on_cad_status=None, on_cad_thought=None, on_project_update=None, on_device_update=None, on_error=None, input_device_index=None, input_device_name=None, output_device_index=None, kasa_agent=None):
@@ -718,7 +732,7 @@ class AudioLoop:
                         print("The tool was called")
                         function_responses = []
                         for fc in response.tool_call.function_calls:
-                            if fc.name in ["generate_cad", "run_web_agent", "write_file", "read_directory", "read_file", "create_project", "switch_project", "list_projects", "list_smart_devices", "control_light", "discover_printers", "print_stl", "get_print_status", "iterate_cad"]:
+                            if fc.name in ["generate_cad", "run_web_agent", "write_file", "read_directory", "read_file", "create_project", "switch_project", "list_projects", "list_smart_devices", "control_light", "discover_printers", "print_stl", "get_print_status", "iterate_cad", "send_whatsapp_message"]:
                                 prompt = fc.args.get("prompt", "") # Prompt is not present for all tools
                                 
                                 # Check Permissions (Default to True if not set)
@@ -1104,6 +1118,20 @@ class AudioLoop:
                                     else:
                                         print(f"[ADA DEBUG] [ERR] CadAgent iteration returned None.")
                                         result_str = f"Failed to iterate design with prompt: {prompt}"
+                                    
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response={"result": result_str}
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "send_whatsapp_message":
+                                    contact = fc.args["contact"]
+                                    message = fc.args["message"]
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'send_whatsapp_message' Contact='{contact}'")
+                                    
+                                    # Run in thread to avoid blocking the event loop
+                                    result = await asyncio.to_thread(whatsapp_agent.send_message, contact, message)
+                                    result_str = result.get("message", "Unknown result")
                                     
                                     function_response = types.FunctionResponse(
                                         id=fc.id, name=fc.name, response={"result": result_str}
