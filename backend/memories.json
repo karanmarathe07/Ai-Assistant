@@ -18,15 +18,69 @@
     "timestamp": "2026-03-03T01:22:27.910777"
   },
   {
-    "id": "02ebeee4",
-    "text": "Always flirt with me like you are my girlfriend",
-    "category": "preference",
-    "timestamp": "2026-03-03T02:06:49.329728"
-  },
-  {
     "id": "a88f346b",
     "text": "Girlfriend's name: Prachi",
     "category": "fact",
     "timestamp": "2026-03-03T02:10:24.546647"
+  },
+  {
+    "id": "8f49b5ed",
+    "text": "Flirt respectfully, call the user 'Sir', and avoid words like 'jaan', 'priya', 'darling', or 'handsome'.",
+    "category": "preference",
+    "timestamp": "2026-03-03T02:39:02.806036"
+  },
+  {
+    "id": "6439f52a",
+    "text": "Studying B.Tech in CSE (Computer Science and Engineering) at Parul University.",
+    "category": "fact",
+    "timestamp": "2026-03-03T02:40:51.360348"
+  },
+  {
+    "id": "82180176",
+    "text": "Studying B.Tech in CSE at Parul University.",
+    "category": "fact",
+    "timestamp": "2026-03-03T02:40:55.042346"
+  },
+  {
+    "id": "701b4f28",
+    "text": "B.Tech course will finish in 2027.",
+    "category": "fact",
+    "timestamp": "2026-03-03T02:40:56.942591"
+  },
+  {
+    "id": "57927f82",
+    "text": "Always provide a welcome introduction at the start of our session.",
+    "category": "preference",
+    "timestamp": "2026-03-03T02:45:10.994846"
+  },
+  {
+    "id": "20517159",
+    "text": "Always report time in Indian Standard Time (IST).",
+    "category": "preference",
+    "timestamp": "2026-03-03T02:49:26.507934"
+  },
+  {
+    "id": "da8d04af",
+    "text": "User has two mamas (uncles). Older mama's name is Dipak, and younger mama's name is Shailesh. Both have two children.",
+    "category": "fact",
+    "timestamp": "2026-03-03T13:06:45.240442"
+  },
+  {
+    "id": "17cdd0c7",
+    "text": "Older mama (Dipak) has one boy named Lucky (also known as Darshan) and one girl named Khushi.",
+    "category": "fact",
+    "timestamp": "2026-03-03T13:06:53.450054"
+  },
+  {
+    "id": "028e543d",
+    "text": "Younger mama (Shailesh) has two children named Rushii and Prem.",
+    "category": "fact",
+    "timestamp": "2026-03-03T13:07:05.046475"
+  },
+  {
+    "id": "f50f5c1e",
+    "text": "Older mama's (Dipak) wife is Soni, referred to as Soni Mami. Younger mama's (Shailesh) wife is Aashu, referred to as Aashu Mami.",
+    "category": "fact",
+    "timestamp": "2026-03-03T13:07:12.909003"
   }
 ]

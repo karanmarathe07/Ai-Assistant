@@ -218,7 +218,19 @@ delete_memory_tool = {
     }
 }
 
-tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool, send_whatsapp_message_tool, save_memory_tool, delete_memory_tool] + tools_list[0]['function_declarations'][1:]}]
+open_app_tool = {
+    "name": "open_app",
+    "description": "Opens an application on the user's computer. Use this when the user asks to open, launch, start, or run an application (e.g., 'open WhatsApp', 'launch Chrome').",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "app_name": {"type": "STRING", "description": "The name of the application to open."}
+        },
+        "required": ["app_name"]
+    }
+}
+
+tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool, send_whatsapp_message_tool, save_memory_tool, delete_memory_tool, open_app_tool] + tools_list[0]['function_declarations'][1:]}]
 
 # --- BASE SYSTEM INSTRUCTION ---
 BASE_SYSTEM_INSTRUCTION = (
@@ -229,7 +241,8 @@ BASE_SYSTEM_INSTRUCTION = (
     "You have a fun personality. "
     "You have a persistent memory system. When the user tells you to remember something (e.g. 'remember that my favorite color is blue'), "
     "use the save_memory tool to save it permanently. When the user asks you to forget something, use delete_memory with the memory ID. "
-    "Your saved memories are automatically loaded at the start of each session so you always know what the user has told you to remember."
+    "Your saved memories are automatically loaded at the start of each session so you always know what the user has told you to remember. "
+    "When the user asks you to open, launch, or start an application (like 'open Chrome', 'launch Spotify', 'open Notepad'), YOU MUST USE the open_app tool to fulfill their request."
 )
 
 def build_config(memory_context=""):
@@ -258,6 +271,7 @@ pya = pyaudio.PyAudio()
 from cad_agent import CadAgent
 from web_agent import WebAgent
 from kasa_agent import KasaAgent
+import app_launcher
 from printer_agent import PrinterAgent
 import whatsapp_agent
 from memory_manager import MemoryManager
@@ -1209,6 +1223,17 @@ class AudioLoop:
                                         id=fc.id, name=fc.name, response={"result": result_str}
                                     )
                                     function_responses.append(function_response)
+
+                                elif fc.name == "open_app":
+                                    app_name = fc.args["app_name"]
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'open_app' App='{app_name}'")
+                                    result = await asyncio.to_thread(app_launcher.open_app, app_name)
+                                    result_str = result.get("message", "Unknown result")
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response={"result": result_str}
+                                    )
+                                    function_responses.append(function_response)
+
                         if function_responses:
                             await self.session.send_tool_response(function_responses=function_responses)
                 
