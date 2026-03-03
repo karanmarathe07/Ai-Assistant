@@ -27,18 +27,10 @@ function App() {
     const [status, setStatus] = useState('Disconnected');
     const [socketConnected, setSocketConnected] = useState(socket.connected); // Track socket connection reactively
     // Auth State
-    const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        // Optimistically assume authenticated if face auth is NOT enabled
-        return localStorage.getItem('face_auth_enabled') !== 'true';
-    });
+    const [isAuthenticated, setIsAuthenticated] = useState(true); // Forced true for bypass
 
     // Initialize from LocalStorage to prevent flash of UI
-    const [isLockScreenVisible, setIsLockScreenVisible] = useState(() => {
-        const saved = localStorage.getItem('face_auth_enabled');
-        // If saved is 'true', we MUST start locked.
-        // If 'false' or null (default off), we start unlocked.
-        return saved === 'true';
-    });
+    const [isLockScreenVisible, setIsLockScreenVisible] = useState(false); // Forced false for bypass
 
     // Local state for tracking settings, also init from local storage
     const [faceAuthEnabled, setFaceAuthEnabled] = useState(() => {

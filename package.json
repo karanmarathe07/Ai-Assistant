@@ -5,8 +5,42 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && npx electron .\"",
-    "build": "vite build",
-    "start": "npx electron ."
+    "build:ui": "vite build",
+    "start": "npx electron .",
+    "build": "npm run build:ui && npx electron-packager . \"A.D.A V2\" --platform=win32 --arch=x64 --icon=public/favicon.ico --out=dist_electron --overwrite",
+    "rebuild": "npm run build && powershell -Command \"Copy-Item -Path .\\backend -Destination '.\\dist_electron\\A.D.A V2-win32-x64\\resources\\backend' -Recurse -Force\""
+  },
+  "build": {
+    "appId": "com.karanmarathe.adav2",
+    "productName": "A.D.A V2",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "dir",
+      "icon": "public/favicon.ico",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    }
   },
   "keywords": [],
   "author": "",
@@ -31,6 +65,8 @@
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^28.2.0",
+    "electron-builder": "^26.8.1",
+    "electron-packager": "^17.1.2",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.0",

@@ -26,7 +26,7 @@ function createWindow() {
     });
 
     // In dev, load Vite server. In prod, load index.html
-    const isDev = process.env.NODE_ENV !== 'production';
+    const isDev = !app.isPackaged;
 
     const loadFrontend = (retries = 3) => {
         const url = isDev ? 'http://localhost:5173' : null;
@@ -64,12 +64,24 @@ function createWindow() {
 }
 
 function startPythonBackend() {
-    const scriptPath = path.join(__dirname, '../backend/server.py');
+    // When packaged, backend is in the same directory as the executable, or in resources folder
+    let backendDir;
+    if (app.isPackaged) {
+        // In packaged app, we will bundle the backend folder along with resources
+        backendDir = path.join(process.resourcesPath, 'backend');
+    } else {
+        backendDir = path.join(__dirname, '../backend');
+    }
+
+    const scriptPath = path.join(backendDir, 'server.py');
     console.log(`Starting Python backend: ${scriptPath}`);
 
-    // Assuming 'python' is in PATH. In prod, this would be the executable.
-    pythonProcess = spawn('python', [scriptPath], {
-        cwd: path.join(__dirname, '../backend'),
+    // Determine Python executable path. Assuming 'python' is in PATH for the user.
+    // In a fully standalone deployment, this would point to the bundled python.exe.
+    const pythonExecutable = 'python';
+
+    pythonProcess = spawn(pythonExecutable, [scriptPath], {
+        cwd: backendDir,
     });
 
     pythonProcess.stdout.on('data', (data) => {
@@ -78,10 +90,39 @@ function startPythonBackend() {
 
     pythonProcess.stderr.on('data', (data) => {
         console.error(`[Python Error]: ${data}`);
+        const fs = require('fs');
+        const logPath = path.join(app.getPath('userData'), 'python_stderr.txt');
+        fs.appendFileSync(logPath, data.toString());
+    });
+
+    pythonProcess.on('error', (err) => {
+        const fs = require('fs');
+        const logPath = path.join(app.getPath('userData'), 'python_spawn_error.txt');
+        fs.writeFileSync(logPath, `Failed to start Python: ${err.message}\nCWD: ${backendDir}\nPath: ${process.env.PATH}`);
+        console.error(`Failed to start subprocess: ${err}`);
     });
 }
 
 app.whenReady().then(() => {
+    // Enable auto-start on login (Windows/macOS)
+    if (!app.isPackaged) {
+        app.setLoginItemSettings({
+            openAtLogin: false,
+            path: app.getPath('exe')
+        });
+    } else {
+        app.setLoginItemSettings({
+            openAtLogin: true,
+            path: app.getPath('exe'),
+            args: ['--hidden']
+        });
+    }
+
+    // Hide window initially if started hidden (e.g. from auto-start)
+    if (process.argv.includes('--hidden')) {
+        app.dock?.hide(); // For macOS
+    }
+
     ipcMain.on('window-minimize', () => {
         if (mainWindow) mainWindow.minimize();
     });

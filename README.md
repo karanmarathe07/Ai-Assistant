@@ -269,6 +269,19 @@ python backend/server.py
 npm run dev
 ```
 
+### Option 3: Compiling into an Executable (.exe)
+If you want to package your project into a standalone executable that you can just double click (with Auto-Start on Boot functionality enabled):
+1. In the `ada_v2` directory, run:
+   ```bash
+   npm run build
+   ```
+2. Your `.exe` will be located under `dist_electron/A.D.A V2-win32-x64/A.D.A V2.exe`.
+
+> Note: If you ever make **Code Changes** to either the React frontend or the Python backend, you must use the rebuild script to update the `.exe`. Run:
+>    ```bash
+>    npm run rebuild
+>    ```
+
 ---
 
 ## ✅ First Flight Checklist (Things to Test)
